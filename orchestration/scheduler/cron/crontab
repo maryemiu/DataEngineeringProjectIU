@@ -1,0 +1,10 @@
+##############################################################################
+# Orchestration – Cron Schedule
+# Pipeline : Daily incremental (ingestion → processing → loader)
+# Timezone : UTC
+# Validate : https://crontab.guru/#0_2_*_*_*
+##############################################################################
+
+# ── Daily Pipeline (02:00 UTC) ─────────────────────────────────────────────
+# Logs are appended to /var/log/pipeline.log (stdout + stderr).
+0 2 * * * /scripts/daily_pipeline/run_daily_pipeline.sh >> /var/log/pipeline.log 2>&1

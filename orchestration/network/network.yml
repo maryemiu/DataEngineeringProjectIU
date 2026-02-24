@@ -1,0 +1,14 @@
+##############################################################################
+# Orchestration – Shared Docker Network
+# Scope : All microservices (storage, ingestion, processing, serving)
+# Driver: bridge
+##############################################################################
+
+# ── Pre-requisite ──────────────────────────────────────────────────────────
+# Create once before the first `docker compose up`:
+#   docker network create uni_net
+# All compose files declare this network as external.
+
+networks:
+  uni_net:
+    driver: bridge

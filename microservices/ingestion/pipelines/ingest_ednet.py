@@ -17,7 +17,7 @@ Usage
 -----
     spark-submit \\
         --master spark://master:7077 \\
-        microservices/ingestion/pipelines/file_intake/ingest_ednet.py \\
+        microservices/ingestion/pipelines/ingest_ednet.py \\
         --config microservices/ingestion/config/ingestion_config.yaml \\
         [--mode initial | daily]
 """
