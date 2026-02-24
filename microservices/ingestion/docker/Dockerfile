@@ -43,5 +43,5 @@ ENV LOG_FORMAT=json \
 # Default: run the full ingestion orchestrator
 ENTRYPOINT ["spark-submit", \
     "--master", "local[*]", \
-    "/app/microservices/ingestion/pipelines/file_intake/ingest_ednet.py", \
+    "/app/microservices/ingestion/pipelines/ingest_ednet.py", \
     "--config", "/app/microservices/ingestion/config/ingestion_config.yaml"]
