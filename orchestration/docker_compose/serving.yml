@@ -38,8 +38,8 @@ services:
   # ── Recommendation Loader (batch job) ────────────────────────────────────
   recommendation_loader:
     build:
-      context: ../../microservices/serving/recommendation_loader/docker
-      dockerfile: Dockerfile
+      context: ../../microservices/serving/recommendation_loader
+      dockerfile: docker/Dockerfile
     image: uni/recommendation-loader:1.0.0  # versioned image (Maintainability)
     container_name: recommendation_loader
     user: "1000:1000"                       # non-root container (Security)
@@ -62,8 +62,8 @@ services:
   # ── Recommendation API (always-on) ──────────────────────────────────────
   recommendation_api:
     build:
-      context: ../../microservices/serving/recommendation_api/docker
-      dockerfile: Dockerfile
+      context: ../../microservices/serving/recommendation_api
+      dockerfile: docker/Dockerfile
     image: uni/recommendation-api:1.0.0     # versioned image (Maintainability)
     container_name: recommendation_api
     restart: unless-stopped                 # always-on service
