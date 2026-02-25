@@ -13,8 +13,8 @@ services:
 
   processing:
     build:
-      context: ../../microservices/processing/docker
-      dockerfile: Dockerfile
+      context: ../../microservices/processing
+      dockerfile: docker/Dockerfile
     image: uni/processing:1.0.0           # versioned image (Maintainability)
     container_name: processing
     user: "1000:1000"                     # non-root container (Security)
@@ -24,7 +24,7 @@ services:
       - MODE=${MODE:-incremental}
       - PROCESSING_WINDOW_DAYS=${PROCESSING_WINDOW_DAYS:-7}
     volumes:
-      - ../../microservices/processing:/app
+      - ../../microservices/processing:/app/microservices/processing
     depends_on:
       namenode:
         condition: service_healthy
