@@ -21,7 +21,7 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB:-recommendations}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -40,6 +40,7 @@ services:
     build:
       context: ../../microservices/serving/recommendation_loader
       dockerfile: docker/Dockerfile
+      network: host  # Use host network for faster downloads during build
     image: uni/recommendation-loader:1.0.0  # versioned image (Maintainability)
     container_name: recommendation_loader
     user: "1000:1000"                       # non-root container (Security)
@@ -64,6 +65,7 @@ services:
     build:
       context: ../../microservices/serving/recommendation_api
       dockerfile: docker/Dockerfile
+      network: host  # Use host network for faster downloads during build
     image: uni/recommendation-api:1.0.0     # versioned image (Maintainability)
     container_name: recommendation_api
     restart: unless-stopped                 # always-on service
@@ -75,9 +77,10 @@ services:
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB:-recommendations}
-      - JWT_SECRET=${JWT_SECRET:-changeme}
+      - JWT_SECRET=${JWT_SECRET}
+      - API_KEY=${API_KEY}
     depends_on:
       postgres:
         condition: service_healthy

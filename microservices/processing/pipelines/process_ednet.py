@@ -1,5 +1,5 @@
 """
-EdNet Processing Pipeline – Orchestrator.
+EdNet Processing Pipeline - Orchestrator.
 
 Runs the complete processing pipeline in sequence:
   1. Data Intake          → Read Parquet from HDFS raw zone
@@ -79,8 +79,12 @@ def main(config_path: str, mode: str = "initial") -> None:
         ``"initial"`` for full reprocessing (overwrite) or
         ``"incremental"`` for windowed reprocessing.
     """
-    write_mode = "overwrite" if mode == "initial" else "overwrite"
-    logger.info("=== EdNet Processing Pipeline [%s mode] ===", mode)
+    # Both modes use overwrite: Spark writes to partitioned paths and overwriting
+    # is idempotent (re-running the same day produces the same output).
+    # The distinction between modes controls the READ window (all history vs last N days),
+    # not the write strategy — curated outputs are always replaced per run.
+    write_mode = "overwrite"
+    logger.info("=== EdNet Processing Pipeline [%s mode, write=%s] ===", mode, write_mode)
 
     cfg = load_config(config_path)
 
@@ -109,13 +113,20 @@ def main(config_path: str, mode: str = "initial") -> None:
     enforce_allowlist = privacy_cfg.get("enforce_allowlist", True)
     allowed_columns = privacy_cfg.get("allowed_output_columns", {})
 
-    # ── Step 1 – Data Intake ─────────────────────────────────────────
+    # ── Step 1 - Data Intake ─────────────────────────────────────────
     logger.info("── Step 1/4: Data Intake ──")
     window_days = None
     if mode == "incremental":
         window_days = cfg.get("processing_window", {}).get("window_days", 7)
 
     dataframes = read_raw_sources(cfg, window_days=window_days)
+
+    # Guard: kt4 is mandatory for all downstream steps
+    if "kt4" not in dataframes:
+        raise RuntimeError(
+            "[pipeline] 'kt4' source missing from dataframes after data intake. "
+            f"Check HDFS path: {cfg['sources']['kt4']['path']}"
+        )
 
     if lineage:
         for name, df in dataframes.items():
@@ -129,7 +140,7 @@ def main(config_path: str, mode: str = "initial") -> None:
             )
         lineage.record_step("data_intake")
 
-    # ── Step 2 – Feature Engineering ─────────────────────────────────
+    # ── Step 2 - Feature Engineering ─────────────────────────────────
     logger.info("── Step 2/4: Feature Engineering ──")
     enriched_df = run_feature_engineering(dataframes, cfg)
     if lineage:
@@ -140,7 +151,7 @@ def main(config_path: str, mode: str = "initial") -> None:
         )
         lineage.record_step("feature_engineering")
 
-    # ── Step 3 – Feature Aggregation ─────────────────────────────────
+    # ── Step 3 - Feature Aggregation ─────────────────────────────────
     logger.info("── Step 3/4: Feature Aggregation ──")
     aggregated_df = run_feature_aggregation(enriched_df, cfg)
     if lineage:
@@ -151,7 +162,7 @@ def main(config_path: str, mode: str = "initial") -> None:
         )
         lineage.record_step("feature_aggregation")
 
-    # ── Step 4 – Similarity Computation ──────────────────────────────
+    # ── Step 4 - Similarity Computation ──────────────────────────────
     logger.info("── Step 4/4: Similarity Computation ──")
     user_vectors, recommendations = run_similarity_computation(aggregated_df, cfg)
     if lineage:
@@ -188,7 +199,7 @@ def main(config_path: str, mode: str = "initial") -> None:
     pk_map = {
         "aggregated_student_features": "user_id",
         "user_vectors": "user_id",
-        "recommendations_batch": "user_id",
+        "recommendations_batch": ["user_id", "recommended_user_id"],  # composite PK
     }
     for name, df in outputs.items():
         dq_validator.validate(df, dataset_name=name, primary_key=pk_map[name])
@@ -238,7 +249,7 @@ def main(config_path: str, mode: str = "initial") -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="EdNet Processing Pipeline – full orchestrator."
+        description="EdNet Processing Pipeline - full orchestrator."
     )
     parser.add_argument(
         "--config",
