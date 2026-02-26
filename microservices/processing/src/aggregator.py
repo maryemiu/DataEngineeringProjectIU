@@ -5,16 +5,16 @@ Aggregates enriched per-interaction rows into **one row per student**,
 producing the ``aggregated_student_features`` curated-zone dataset.
 
 Computed features:
-  - total_interactions          – count of all KT4 rows
-  - correct_count               – sum(is_correct) where is_correct IS NOT NULL
-  - incorrect_count             – respond rows minus correct_count
-  - accuracy_rate               – correct_count / respond_count
-  - avg_response_time_ms        – mean response time for "respond" actions
-  - total_elapsed_time_ms       – sum of all elapsed_time
-  - unique_questions_attempted  – distinct item_ids with action_type="respond"
-  - unique_lectures_viewed      – distinct item_ids with action_type="enter"
-  - active_days                 – distinct event_date values
-  - interactions_part_N         – interaction count per TOEIC part (1–7)
+  - total_interactions          - count of all KT4 rows
+  - correct_count               - sum(is_correct) where is_correct IS NOT NULL
+  - incorrect_count             - respond rows minus correct_count
+  - accuracy_rate               - correct_count / respond_count
+  - avg_response_time_ms        - mean response time for "respond" actions
+  - total_elapsed_time_ms       - sum of all elapsed_time
+  - unique_questions_attempted  - distinct item_ids with action_type="respond"
+  - unique_lectures_viewed      - distinct item_ids with action_type="enter"
+  - active_days                 - distinct event_date values
+  - interactions_part_N         - interaction count per TOEIC part (1-7)
 
 Architecture diagram: "Feature Aggregation → per-student feature vector"
 """
@@ -44,7 +44,7 @@ def aggregate_student_features(df: DataFrame) -> DataFrame:
     ----------
     df : DataFrame
         Enriched interactions (output of :func:`enrich_interactions`).
-        Must contain: user_id, action_type, item_id, elapsed_time,
+        Must contain: user_id, action_type, item_id, cursor_time,
         event_date, is_correct, response_time_ms, part.
 
     Returns
@@ -78,8 +78,8 @@ def aggregate_student_features(df: DataFrame) -> DataFrame:
             when(respond_filter, col("response_time_ms"))
         ).alias("avg_response_time_ms"),
 
-        # Total elapsed time
-        _sum(col("elapsed_time")).alias("total_elapsed_time_ms"),
+        # Total cursor time (sum of response times)
+        _sum(col("cursor_time")).alias("total_elapsed_time_ms"),
 
         # Distinct counts
         countDistinct(
@@ -90,7 +90,7 @@ def aggregate_student_features(df: DataFrame) -> DataFrame:
         ).alias("unique_lectures_viewed"),
         countDistinct(col("event_date")).alias("active_days"),
 
-        # Per-part interactions (TOEIC parts 1–7)
+        # Per-part interactions (TOEIC parts 1-7)
         *[
             _sum(
                 when(col("part") == part_num, lit(1)).otherwise(lit(0))
