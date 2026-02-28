@@ -35,7 +35,7 @@ def get_recommendations(user_id: str, top_k: int = 10) -> list[dict[str, Any]]:
         ORDER BY rank ASC
         LIMIT %s
     """
-    with database.get_connection() as 
+    with database.get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(query, (user_id, top_k))
             rows = cur.fetchall()
@@ -65,7 +65,7 @@ def get_student_features(user_id: str) -> dict[str, Any] | None:
         FROM student_features
         WHERE user_id = %s
     """
-    with database.get_connection() as 
+    with database.get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(query, (user_id,))
             row = cur.fetchone()
@@ -85,4 +85,5 @@ def get_student_features(user_id: str) -> dict[str, Any] | None:
         "unique_lectures_viewed": row[8],
         "active_days": row[9],
     }
+
 
