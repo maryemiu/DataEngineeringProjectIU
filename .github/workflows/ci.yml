@@ -1,14 +1,43 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# Set project root on Python path for all jobs — fixes "No module named 'microservices'"
+env:
+  PYTHONPATH: "."
 
 jobs:
-  test:
+
+  # ──Unit tests — Recommendation API  ──────────
+  test-api:
+    name: "Test: Recommendation API"
     runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: ci-test-jwt-secret
+      API_KEY: ci-test-api-key
+      POSTGRES_PASSWORD: ci-test-password
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - uses: actions/setup-python@v5
         with:
-          node-version: 18
-      - run: npm install
-      - run: npm test
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            fastapi>=0.104 \
+            uvicorn \
+            psycopg2-binary \
+            pyyaml \
+            "python-jose[cryptography]>=3.3" \
+            pytest \
+            httpx
+
+      - name: Run API tests
+        run: pytest microservices/serving/recommendation_api/tests/ -v --tb=short
