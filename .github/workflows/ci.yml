@@ -128,3 +128,49 @@ jobs:
 
       - name: Run loader tests
         run: pytest microservices/serving/recommendation_loader/tests/ -v --tb=short
+
+  # ──  Build all Docker images to  verifies Dockerfiles are valid ─
+  build-images:
+    name: "Build Docker Images"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build recommendation-api
+        uses: docker/build-push-action@v6
+        with:
+          context: microservices/serving/recommendation_api
+          file: microservices/serving/recommendation_api/docker/Dockerfile
+          push: false
+          cache-from: type=gha,scope=recommendation-api
+          cache-to: type=gha,mode=max,scope=recommendation-api
+
+      - name: Build recommendation-loader
+        uses: docker/build-push-action@v6
+        with:
+          context: microservices/serving/recommendation_loader
+          file: microservices/serving/recommendation_loader/docker/Dockerfile
+          push: false
+          cache-from: type=gha,scope=recommendation-loader
+          cache-to: type=gha,mode=max,scope=recommendation-loader
+
+      - name: Build ingestion
+        uses: docker/build-push-action@v6
+        with:
+          context: microservices/ingestion
+          file: microservices/ingestion/docker/Dockerfile
+          push: false
+          cache-from: type=gha,scope=ingestion
+          cache-to: type=gha,mode=max,scope=ingestion
+
+      - name: Build processing
+        uses: docker/build-push-action@v6
+        with:
+          context: microservices/processing
+          file: microservices/processing/docker/Dockerfile
+          push: false
+          cache-from: type=gha,scope=processing
+          cache-to: type=gha,mode=max,scope=processing
