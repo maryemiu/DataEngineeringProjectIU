@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop ,ci]
+    branches: [main, develop,test]
   pull_request:
-    branches: [main, develop ,ci]
+    branches: [main, develop,test]
 
 # Set project root on Python path for all jobs — fixes "No module named 'microservices'"
 env:
@@ -12,7 +12,7 @@ env:
 
 jobs:
 
-  # ──Unit tests — Recommendation API  ──────────
+  # ── Unit tests — Recommendation API  ──────────
   test-api:
     name: "Test: Recommendation API"
     runs-on: ubuntu-latest
@@ -41,4 +41,72 @@ jobs:
 
       - name: Run API tests
         run: pytest microservices/serving/recommendation_api/tests/ -v --tb=short
-        
+
+  # ── Unit tests — Processing ──────────────────────────────
+  test-processing:
+    name: "Test: Processing"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "11"
+          distribution: temurin
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install PySpark + test deps
+        run: pip install "pyspark==3.5.1" pytest pyyaml pandas
+
+      - name: Run processing tests
+        run: pytest microservices/processing/tests/ -v --tb=short
+
+  # ── Unit tests — Ingestion (PySpark) ───────────────────────────────
+  test-ingestion:
+    name: "Test: Ingestion"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "11"
+          distribution: temurin
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install PySpark + test deps
+        run: pip install "pyspark==3.5.1" pytest pyyaml pandas
+
+      - name: Run ingestion tests
+        run: pytest microservices/ingestion/tests/ -v --tb=short
+
+  # ── Unit tests — Storage (PySpark) ────────────────────────────────
+  test-storage:
+    name: "Test: Storage"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "11"
+          distribution: temurin
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install PySpark + test deps
+        run: pip install "pyspark==3.5.1" pytest pyyaml
+
+      - name: Run storage tests
+        run: pytest microservices/storage/tests/ -v --tb=short
