@@ -110,3 +110,21 @@ jobs:
 
       - name: Run storage tests
         run: pytest microservices/storage/tests/ -v --tb=short
+
+  # ── Unit tests — Recommendation Loader ───────────────
+  test-loader:
+    name: "Test: Serving — recommendation_loader"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install psycopg2-binary pytest pyyaml
+
+      - name: Run loader tests
+        run: pytest microservices/serving/recommendation_loader/tests/ -v --tb=short
